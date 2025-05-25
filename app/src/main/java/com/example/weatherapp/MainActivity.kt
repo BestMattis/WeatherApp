@@ -1,6 +1,7 @@
 package com.example.weatherapp
 
 import android.Manifest
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,10 +19,12 @@ import com.example.weatherapp.ui.theme.WeatherAppViewModelTestTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val dataStore : DataStore<Preferences> by preferencesDataStore(name = "metric")
+    companion object{
+        private val Context.dataStore : DataStore<Preferences> by preferencesDataStore(name = "metric")
+    }
 
     private lateinit var viewModel : WeatherViewModel
-    private val apiKey = "7a784d563501baf5793727dbb7dffb3b"
+    private val apiKey = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

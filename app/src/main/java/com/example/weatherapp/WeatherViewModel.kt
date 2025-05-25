@@ -20,7 +20,6 @@ import com.example.weatherapp.persistance.PreferenceKeys
 import com.example.weatherapp.persistance.WeatherDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.text.DecimalFormat
 
 class WeatherViewModel(
     private val dataStore: DataStore<Preferences>,
@@ -52,6 +51,9 @@ class WeatherViewModel(
 
     fun removeFavo(weatherData : WeatherResponse){
         favoList.remove(weatherData)
+        viewModelScope.launch {
+            weatherDao.updateFavoTag(false, weatherData.name)
+        }
     }
 
     fun readUnit() {
@@ -68,7 +70,9 @@ class WeatherViewModel(
 
     fun readFavorites(){
         viewModelScope.launch {
-           // favoList = weatherDao.getFavorites()
+            weatherDao.getFavorites()?.forEach {
+                favoList.add(cacheToData(it))
+            }
         }
 
     }
@@ -80,6 +84,9 @@ class WeatherViewModel(
 
     fun addToFavoList(weatherData : WeatherResponse){
         favoList.add(weatherData)
+        viewModelScope.launch {
+            weatherDao.updateFavoTag(true, weatherData.name)
+        }
     }
 
     fun fetchWeather_LatLon(latVal : Double, lonVal : Double) {
@@ -89,37 +96,18 @@ class WeatherViewModel(
 
         viewModelScope.launch {
             try {
+
                 val cacheData = weatherDao.getWeather(lat = lat, lon = lon)
                 if (cacheData == null || System.currentTimeMillis() - cacheData.timestamp > 600000){
 
                     println("new Data with units: $selectedUnit")
 
                     val weather = RetrofitClient.api.getCurrentWeather_LatLon(lat, lon, apiKey, selectedUnit)
-                    println(weather)
                     weatherState = weather
-                    weatherDao.insertWeather(CachedWeather(
-                        id = weather.name.trim(' ').lowercase(),
-                        temperature = weather.main.temp,
-                        humidity = weather.main.humidity,
-                        description = weather.weather.first().description,
-                        windSpeed = weather.wind.speed,
-                        timestamp = System.currentTimeMillis(),
-                        longitude = lon,
-                        latitude = lat,
-                        favTag = false
-                    ))
+                    weatherDao.insertWeather(dataToCache(weather, false))
                 } else {
 
-                    weatherState = WeatherResponse(
-                        name = cacheData.id,
-                        main = Main(temp = cacheData.temperature, humidity = cacheData.humidity),
-                        wind = Wind(cacheData.windSpeed),
-                        coord = Coord(lat = cacheData.latitude, lon = cacheData.longitude),
-                        weather = listOf(Weather(
-                            description = cacheData.description
-                        ))
-                    )
-                    println("cached $weatherState")
+                    weatherState = cacheToData(cacheData)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -131,46 +119,49 @@ class WeatherViewModel(
 
         val sanatizedName = cityName.trim(' ').lowercase()
 
-        println(sanatizedName)
-
         viewModelScope.launch {
             try {
                 val cacheData = weatherDao.getWeather(name = sanatizedName)
                 if (cacheData == null || System.currentTimeMillis() - cacheData.timestamp > 600000){
 
-                    println("new Data")
-
                     val weather = RetrofitClient.api.getCurrentWeather_Name(sanatizedName, apiKey, selectedUnit)
-                    val cachedWeather = CachedWeather(
-                        id = sanatizedName,
-                        temperature = weather.main.temp,
-                        humidity = weather.main.humidity,
-                        description = weather.weather.first().description,
-                        windSpeed = weather.wind.speed,
-                        timestamp = System.currentTimeMillis(),
-                        longitude = ((weather.coord.lat * 1000).toInt()).toDouble() / 1000,
-                        latitude = ((weather.coord.lon * 1000).toInt()).toDouble() / 1000,
-                        favTag = true
-                    )
+                    val cachedWeather = dataToCache(weather, true)
                     weatherDao.insertWeather(cachedWeather)
 
                     addToFavoList(weather)
                 } else {
-
-                    addToFavoList(WeatherResponse(
-                        name = cacheData.id,
-                        main = Main(temp = cacheData.temperature, humidity = cacheData.humidity),
-                        wind = Wind(cacheData.windSpeed),
-                        coord = Coord(lat = cacheData.latitude, lon = cacheData.longitude),
-                        weather = listOf(Weather(
-                            description = cacheData.description
-                        ))
-                    ))
-                    println("cached")
+                    addToFavoList(cacheToData(cacheData))
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+
+    fun cacheToData(cacheData : CachedWeather) : WeatherResponse {
+        return WeatherResponse(
+            name = cacheData.id,
+            main = Main(temp = cacheData.temperature, humidity = cacheData.humidity),
+            wind = Wind(cacheData.windSpeed),
+            coord = Coord(lat = cacheData.latitude, lon = cacheData.longitude),
+            weather = listOf(
+                Weather(description = cacheData.description
+                ))
+        )
+    }
+
+    fun dataToCache(weather : WeatherResponse, favTag : Boolean) : CachedWeather {
+        return CachedWeather(
+            id = weather.name.trim(' ').lowercase(),
+            temperature = weather.main.temp,
+            humidity = weather.main.humidity,
+            description = weather.weather.first().description,
+            windSpeed = weather.wind.speed,
+            timestamp = System.currentTimeMillis(),
+            longitude = ((weather.coord.lon * 1000).toInt()).toDouble() / 1000,
+            latitude = ((weather.coord.lat * 1000).toInt()).toDouble() / 1000,
+            favTag = favTag
+        )
+    }
+
 }
