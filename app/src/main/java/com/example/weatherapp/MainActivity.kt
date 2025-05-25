@@ -13,7 +13,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.room.Room.databaseBuilder
+import com.example.weatherapp.navigation.FavoScreen
+import com.example.weatherapp.navigation.MainScreen
+import com.example.weatherapp.navigation.Routes
+import com.example.weatherapp.navigation.SettingScreen
 import com.example.weatherapp.persistance.WeatherDatabase
 import com.example.weatherapp.ui.theme.WeatherAppViewModelTestTheme
 

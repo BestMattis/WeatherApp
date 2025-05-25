@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.navigation
 
 object Routes {
     var settingScreen = "settings"

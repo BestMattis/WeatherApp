@@ -14,7 +14,8 @@ data class Coord(
 )
 
 data class Weather(
-    val description : String
+    val description : String,
+    val icon : String
 )
 
 data class Main(

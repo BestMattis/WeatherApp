@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.navigation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.weatherapp.WeatherViewModel
 
 // base structure from https://developer.android.com/develop/ui/compose/components/radio-button?hl=de
 @Composable

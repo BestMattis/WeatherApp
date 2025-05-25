@@ -13,5 +13,7 @@ data class CachedWeather(
     val description : String,
     val windSpeed : Float,
     val timestamp : Long,
-    val favTag : Boolean
+    val favTag : Boolean,
+    val unit : String,
+    val iconId : String
 )

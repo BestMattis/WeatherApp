@@ -48,11 +48,6 @@ class LocationClient(val context : Context) : ComponentActivity() {
             })
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
-                    val lat = location.latitude
-                    val lon = location.longitude
-
-                    println("latitude: $lat , longitude: $lon")
-
                     callback(location)
                 }
             }

@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.navigation
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.example.weatherapp.api.WeatherResponse
+import com.example.weatherapp.WeatherViewModel
+import com.example.weatherapp.persistance.CachedWeather
 
 @Composable
 fun FavoScreen(
@@ -31,8 +32,8 @@ fun FavoScreen(
     viewModel: WeatherViewModel,
 ){
 
-    var favoList = viewModel.favoList
-    var selectedUnit = viewModel.selectedUnit
+    val favoList = viewModel.favoList
+    //val oldUnit = viewModel.favUnit
 
     val showNameDialog = remember { mutableStateOf(false) }
     Column(
@@ -41,7 +42,7 @@ fun FavoScreen(
         verticalArrangement = Arrangement.Center
     ) {
         favoList.forEach { item ->
-            favoItem(item, selectedUnit, viewModel)
+            favoItem(item, viewModel)
         }
         if(showNameDialog.value){
             CityNameDialog(onDismissRequest = {}, showNameDialog, viewModel)
@@ -49,12 +50,11 @@ fun FavoScreen(
         Button(onClick = {
             showNameDialog.value = true
         }) { Text("Add New") }
-
     }
 }
 
 @Composable
-fun favoItem(weatherData : WeatherResponse, unit : String, viewModel: WeatherViewModel){
+fun favoItem(cacheData : CachedWeather, viewModel: WeatherViewModel){
     Column(Modifier
         .fillMaxWidth()
         .border(
@@ -62,23 +62,23 @@ fun favoItem(weatherData : WeatherResponse, unit : String, viewModel: WeatherVie
             MaterialTheme.colorScheme.primary,
             shape = RoundedCornerShape(15.dp, 15.dp, 15.dp, 15.dp)
         ), horizontalAlignment = Alignment.CenterHorizontally){
-        Text("Ort: ${weatherData.name}")
+        Text("Ort: ${cacheData.id}")
         Row(){
 
-            val unitSymbol = when (unit) {
+            val unitSymbol = when (cacheData.unit) {
                 "metric" -> "°C"
                 "imperial" -> "°F"
                 else -> "K"
             }
 
-            Text("Temp: ${weatherData.main.temp}$unitSymbol ")
-            Text("Humid: ${weatherData.main.humidity}% ")
-            Text("Wind: ${weatherData.wind.speed} ")
+            Text("Temp: ${cacheData.temperature}$unitSymbol ")
+            Text("Humid: ${cacheData.humidity}% ")
+            Text("Wind: ${cacheData.windSpeed} ")
         }
         Row(){
-            Text(weatherData.weather.first().description)
+            Text(cacheData.description)
             Button(onClick = {
-                viewModel.removeFavo(weatherData)
+                viewModel.removeFavo(cacheData)
             }) {
                 Text("X")
             }
@@ -103,7 +103,7 @@ fun CityNameDialog(
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            var text = remember { mutableStateOf("") }
+            val text = remember { mutableStateOf("") }
 
             TextField(
                 value = text.value,

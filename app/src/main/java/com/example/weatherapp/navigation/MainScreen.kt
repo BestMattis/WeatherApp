@@ -1,4 +1,4 @@
-package com.example.weatherapp
+package com.example.weatherapp.navigation
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
+import com.example.weatherapp.WeatherViewModel
 import com.example.weatherapp.api.LocationClient
 
 
@@ -75,7 +77,7 @@ fun WeatherUI(
     context: Context
 ) {
     val weather = viewModel.weatherState
-    val selectedUnit = viewModel.selectedUnit
+    val oldUnit = viewModel.mainUnit
 
     val locationClient = LocationClient(context)
 
@@ -105,9 +107,15 @@ fun WeatherUI(
             CircularProgressIndicator()
         } else {
             if (weather != null) {
+
+                AsyncImage(
+                    model = "https://openweathermap.org/img/wn/${weather.weather.first().icon}@2x.png",
+                    contentDescription = "Weather Icon"
+                )
+
                 Text("Ort: ${weather.name}")
 
-                val unitSymbol = when (selectedUnit) {
+                val unitSymbol = when (oldUnit) {
                     "metric" -> "°C"
                     "imperial" -> "°F"
                     else -> "K"

@@ -31,9 +31,15 @@ class WeatherViewModel(
     var weatherState by mutableStateOf<WeatherResponse?>(null)
         private set
 
-    val favoList = mutableStateListOf<WeatherResponse>()//by mutableListOf<List<WeatherResponse>?>(null)
+    val favoList = mutableStateListOf<CachedWeather>()//by mutableListOf<List<WeatherResponse>?>(null)
 
     var selectedUnit by mutableStateOf("metric") // default Celsius
+        private set
+
+    var favUnit by mutableStateOf("metric") // default Celsius
+        private set
+
+    var mainUnit by mutableStateOf("metric") // default Celsius
         private set
 
     init {
@@ -49,10 +55,10 @@ class WeatherViewModel(
         }
     }
 
-    fun removeFavo(weatherData : WeatherResponse){
-        favoList.remove(weatherData)
+    fun removeFavo(cacheData: CachedWeather){
+        favoList.remove(cacheData)
         viewModelScope.launch {
-            weatherDao.updateFavoTag(false, weatherData.name)
+            weatherDao.updateFavoTag(false, cacheData.id)
         }
     }
 
@@ -71,7 +77,7 @@ class WeatherViewModel(
     fun readFavorites(){
         viewModelScope.launch {
             weatherDao.getFavorites()?.forEach {
-                favoList.add(cacheToData(it))
+                favoList.add(it)
             }
         }
 
@@ -82,10 +88,20 @@ class WeatherViewModel(
         saveUnit(unit)
     }
 
-    fun addToFavoList(weatherData : WeatherResponse){
-        favoList.add(weatherData)
+    fun addToFavoList(cacheData: CachedWeather){
+        var favIndex = 1000
+        favoList.forEachIndexed { index, weatherResponse ->
+            if (weatherResponse.id == cacheData.id) {
+                favIndex = index
+            }
+        }
+        if (favIndex < favoList.size) {
+            favoList.removeAt(favIndex)
+        }
+
+        favoList.add(cacheData)
         viewModelScope.launch {
-            weatherDao.updateFavoTag(true, weatherData.name)
+            weatherDao.updateFavoTag(true, cacheData.id)
         }
     }
 
@@ -98,15 +114,16 @@ class WeatherViewModel(
             try {
 
                 val cacheData = weatherDao.getWeather(lat = lat, lon = lon)
-                if (cacheData == null || System.currentTimeMillis() - cacheData.timestamp > 600000){
-
-                    println("new Data with units: $selectedUnit")
+                if (cacheData == null
+                    || System.currentTimeMillis() - cacheData.timestamp > 600000    //10min
+                    || selectedUnit != cacheData.unit){
 
                     val weather = RetrofitClient.api.getCurrentWeather_LatLon(lat, lon, apiKey, selectedUnit)
+                    mainUnit = selectedUnit
+
                     weatherState = weather
                     weatherDao.insertWeather(dataToCache(weather, false))
                 } else {
-
                     weatherState = cacheToData(cacheData)
                 }
             } catch (e: Exception) {
@@ -122,15 +139,18 @@ class WeatherViewModel(
         viewModelScope.launch {
             try {
                 val cacheData = weatherDao.getWeather(name = sanatizedName)
-                if (cacheData == null || System.currentTimeMillis() - cacheData.timestamp > 600000){
+                if (cacheData == null
+                    || System.currentTimeMillis() - cacheData.timestamp > 600000 //10min
+                    || selectedUnit != cacheData.unit){
 
                     val weather = RetrofitClient.api.getCurrentWeather_Name(sanatizedName, apiKey, selectedUnit)
+
                     val cachedWeather = dataToCache(weather, true)
                     weatherDao.insertWeather(cachedWeather)
 
-                    addToFavoList(weather)
+                    addToFavoList(cachedWeather)
                 } else {
-                    addToFavoList(cacheToData(cacheData))
+                    addToFavoList(cacheData)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -145,8 +165,7 @@ class WeatherViewModel(
             wind = Wind(cacheData.windSpeed),
             coord = Coord(lat = cacheData.latitude, lon = cacheData.longitude),
             weather = listOf(
-                Weather(description = cacheData.description
-                ))
+                Weather(description = cacheData.description, icon = cacheData.iconId))
         )
     }
 
@@ -160,7 +179,9 @@ class WeatherViewModel(
             timestamp = System.currentTimeMillis(),
             longitude = ((weather.coord.lon * 1000).toInt()).toDouble() / 1000,
             latitude = ((weather.coord.lat * 1000).toInt()).toDouble() / 1000,
-            favTag = favTag
+            favTag = favTag,
+            unit = selectedUnit,
+            iconId = weather.weather.first().icon
         )
     }
 
