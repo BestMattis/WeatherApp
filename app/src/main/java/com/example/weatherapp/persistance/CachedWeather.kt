@@ -5,8 +5,13 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "weather")
 data class CachedWeather(
-    @PrimaryKey val id: Int = 0,
-    val temperature: Double,
-    val description: String,
-    val timestamp: Long
+    @PrimaryKey val id : String = "",
+    val latitude : Double,
+    val longitude: Double,
+    val temperature : Float,
+    val humidity : Int,
+    val description : String,
+    val windSpeed : Float,
+    val timestamp : Long,
+    val favTag : Boolean
 )

@@ -3,8 +3,14 @@ package com.example.weatherapp.api
 data class WeatherResponse(
     val name : String,
     val main : Main,
+    val coord : Coord,
     val wind : Wind,
     val weather : List<Weather>
+)
+
+data class Coord(
+    val lat : Double,
+    val lon : Double
 )
 
 data class Weather(

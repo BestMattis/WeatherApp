@@ -28,7 +28,7 @@ import com.example.weatherapp.api.WeatherResponse
 @Composable
 fun FavoScreen(
     navController: NavController,
-    viewModel: WeatherViewModel
+    viewModel: WeatherViewModel,
 ){
 
     var favoList = viewModel.favoList
@@ -71,7 +71,7 @@ fun favoItem(weatherData : WeatherResponse, unit : String, viewModel: WeatherVie
                 else -> "K"
             }
 
-            Text("Temp: ${weatherData.main.temp}  $unitSymbol ")
+            Text("Temp: ${weatherData.main.temp}$unitSymbol ")
             Text("Humid: ${weatherData.main.humidity}% ")
             Text("Wind: ${weatherData.wind.speed} ")
         }
@@ -108,8 +108,8 @@ fun CityNameDialog(
             TextField(
                 value = text.value,
                 onValueChange = { text.value = it },
-                label = { Text("Enter your name") },
-                placeholder = { Text("John Doe") },
+                label = { Text("Enter City Name") },
+                //placeholder = { Text("London") },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()

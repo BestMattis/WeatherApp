@@ -113,7 +113,7 @@ fun WeatherUI(
                     else -> "K"
                 }
 
-                Text("Temperatur: ${weather.main.temp}  $unitSymbol ")
+                Text("Temperatur: ${weather.main.temp}$unitSymbol ")
                 Text("Humidity: ${weather.main.humidity}%")
                 Text("Wind: ${weather.wind.speed}")
                 Text(weather.weather.first().description)

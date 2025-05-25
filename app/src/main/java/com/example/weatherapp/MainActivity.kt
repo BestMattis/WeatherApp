@@ -12,13 +12,16 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room.databaseBuilder
+import com.example.weatherapp.persistance.WeatherDatabase
 import com.example.weatherapp.ui.theme.WeatherAppViewModelTestTheme
 
 class MainActivity : ComponentActivity() {
 
     private val dataStore : DataStore<Preferences> by preferencesDataStore(name = "metric")
+
     private lateinit var viewModel : WeatherViewModel
-    private val apiKey = ""
+    private val apiKey = "7a784d563501baf5793727dbb7dffb3b"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,7 +32,8 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ), 0)
 
-        viewModel = WeatherViewModel(dataStore, apiKey)
+        val db = WeatherDatabase.getDatabase(applicationContext)
+        viewModel = WeatherViewModel(dataStore, apiKey, db.weatherDao())
 
         setContent {
             WeatherAppViewModelTestTheme {
